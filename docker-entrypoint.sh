@@ -28,13 +28,29 @@ if [ ! -f "$FUSEKI_BASE/shiro.ini" ] ; then
     echo ""
     echo "admin=$ADMIN_PASSWORD"
   fi
+  if [ -z "$USER_PASSWORD" ] ; then
+    USER_PASSWORD=$(pwgen -s 15)
+    echo "Randomly generated admin password:"
+    echo ""
+    echo "user=$USER_PASSWORD"
+  fi
   echo ""
   echo "###################################"
 fi
 
 # $ADMIN_PASSWORD can always override
 if [ -n "$ADMIN_PASSWORD" ] ; then
-  sed -i "s/^admin=.*/admin=$ADMIN_PASSWORD/" "$FUSEKI_BASE/shiro.ini"
+  if [ -z "$ADMIN_USERNAME"] ; then
+    ADMIN_USERNAME="admin"
+  fi   
+  sed -i "s/^adminuser=.*/$ADMIN_USERNAME=$ADMIN_PASSWORD, admin/" "$FUSEKI_BASE/shiro.ini"
+fi
+
+if [ -n "$USER_PASSWORD" ] ; then
+  if [ -z "$USER_USERNAME"] ; then
+    USER_USERNAME="user"
+  fi
+  sed -i "s/^reguser=.*/$USER_USERNAME=$USER_PASSWORD, user/" "$FUSEKI_BASE/shiro.ini"
 fi
 
 test "${ENABLE_DATA_WRITE}" = true && sed -i 's/\(fuseki:serviceReadGraphStore\)/#\1/' $ASSEMBLER && sed -i 's/#\s*\(fuseki:serviceReadWriteGraphStore\)/\1/' $ASSEMBLER
